@@ -95,7 +95,7 @@ def eval_sh(deg, sh, dirs):
     return result
 
 
-def build_color(sh_degree, shs, rays_d):
-        color = eval_sh(sh_degree, shs.permute(0,2,1), rays_d)
+def build_color(sh_degree, shs, rays_d, dependency_config):
+        color = dependency_config.eval_sh(sh_degree, shs.permute(0,2,1), rays_d)
         color = (color + 0.5).clip(min=0.0) # Shape (N, 3) in [0,1]
         return color

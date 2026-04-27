@@ -2,6 +2,7 @@
 
 | stage                    | op name                         | Type      | torch source                                                           | pytorch impl | A2 sim | A2 compiled | A5 sim | A5 compiled |
 |--------------------------|---------------------------------|----------|------------------------------------------------------------------------|:------------:|--------|---|--|--|
+| (top-level class)                 | `renderer`                      | Forward  | `pytorch.rendering.torch_rasterization`                                | ✅           | - | - | - | - |
 | Parameter preprocessing         | `compute_view_dirs_packed`      | Forward  | `rasterization_utils._compute_view_dirs_packed`                        | ✅           | - | - | - | - |
 | Parameter preprocessing          | `compute_view_dirs_packed`      | Backward | `rasterization_utils._compute_view_dirs_packed`                        | (autograd)   | - | - | - | - |
 | Color preprocessing (Spherical Harmonics) | `eval_sh`                       | Forward  | `sh_utils.eval_sh`                                                     | ✅           | - | - | - | - |

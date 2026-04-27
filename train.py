@@ -31,8 +31,46 @@ from torch.nn import functional as F
 from torch.utils.tensorboard import SummaryWriter
 
 from sample import depth_to_world, voxel_downsample, tsdf_fusion
-from rendering import torch_rasterization
 from data_cache import load_scene
+from dependency_config import DependencyConfig
+from pytorch.rendering import torch_rasterization
+from pytorch.EWA_fully_fused_proj_packed import (
+    build_rotation,
+    build_scaling_rotation,
+    build_covariance_3d,
+    projection_means2d_pinhole,
+    build_covariance_2d,
+    inverse_cov2d_v2,
+    torch_splat_fully_fused_projection_batch,
+    get_radius,
+    get_rect,
+)
+from pytorch.sh_utils import eval_sh, build_color
+from pytorch.rasterization_utils import (
+    _compute_view_dirs_packed,
+    torch_isect_tiles,
+    torch_isect_offset_encode,
+    torch_rasterize_to_pixels_gaussian_merge,
+)
+
+default_dependency_config = DependencyConfig(
+    renderer=torch_rasterization,
+    compute_view_dirs_packed=_compute_view_dirs_packed,
+    eval_sh=eval_sh,
+    build_color=build_color,
+    build_rotation=build_rotation,
+    build_scaling_rotation=build_scaling_rotation,
+    build_covariance_3d=build_covariance_3d,
+    projection_means2d_pinhole=projection_means2d_pinhole,
+    build_covariance_2d=build_covariance_2d,
+    inverse_cov2d=inverse_cov2d_v2,
+    fully_fused_projection_batch=torch_splat_fully_fused_projection_batch,
+    get_radius=get_radius,
+    get_rect=get_rect,
+    isect_tiles=torch_isect_tiles,
+    isect_offset_encode=torch_isect_offset_encode,
+    rasterize_to_pixels=torch_rasterize_to_pixels_gaussian_merge,
+)
 
 
 if torch.cuda.is_available():
@@ -62,9 +100,9 @@ def _empty_cache(device):
         torch.cuda.empty_cache()
 
 
-def _render(xyz, quat, sca, o, rgb, viewmats, Ks, width, height):
-    """Wrap torch_rasterization with the post-processing the loop expects."""
-    out = torch_rasterization(
+def _render(xyz, quat, sca, o, rgb, viewmats, Ks, width, height, dependency_config):
+    """Wrap the renderer with the post-processing the loop expects."""
+    out = dependency_config.renderer(
         means=xyz.reshape(-1, 3),
         quats=quat.reshape(-1, 4),
         scales=sca.reshape(-1, 3),
@@ -74,6 +112,7 @@ def _render(xyz, quat, sca, o, rgb, viewmats, Ks, width, height):
         Ks=Ks,
         width=width,
         height=height,
+        dependency_config=dependency_config,
         render_mode='RGB+ED',
     )[0][..., :3]
     # [..., C, H, W, 3] -> [C, 3, H, W]
@@ -185,6 +224,7 @@ def main():
             Ks=intrinsics[views],
             width=images.shape[3],
             height=images.shape[2],
+            dependency_config=default_dependency_config,
         )
 
         optim.zero_grad()
@@ -207,6 +247,7 @@ def main():
                     Ks=intrinsics_nv,
                     width=images_nv.shape[3],
                     height=images_nv.shape[2],
+                    dependency_config=default_dependency_config,
                 )
 
             psnr_nv = -10 * F.mse_loss(render_nv, images_nv, reduction='none').mean((1, 2, 3)).log10_().mean().item()
