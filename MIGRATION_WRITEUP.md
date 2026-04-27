@@ -13,7 +13,7 @@
 | 3D->2D Projection          | `build_rotation`                | Backward | `EWA_fully_fused_proj_packed.build_rotation`                           | (autograd)   | - | - | - | - |
 | 3D->2D Projection        | `build_scaling_rotation`        | Forward  | `EWA_fully_fused_proj_packed.build_scaling_rotation`                   | ✅           | - | - | - | - |
 | 3D->2D Projection        | `build_scaling_rotation`        | Backward | `EWA_fully_fused_proj_packed.build_scaling_rotation`                   | (autograd)   | - | - | - | - |
-| 3D->2D Projection     | `build_covariance_3d`           | Forward  | `EWA_fully_fused_proj_packed.build_covariance_3d`                      | ✅           | - | - | - | - |
+| 3D->2D Projection     | `build_covariance_3d`           | Forward  | `EWA_fully_fused_proj_packed.build_covariance_3d`                      | ✅           | - | - | ✅ | - |
 | 3D->2D Projection     | `build_covariance_3d`           | Backward | `EWA_fully_fused_proj_packed.build_covariance_3d`                      | (autograd)   | - | - | - | - |
 | 3D->2D Projection     | `projection_means2d_pinhole`    | Forward  | `EWA_fully_fused_proj_packed.projection_means2d_pinhole`               | ✅           | - | - | - | - |
 | 3D->2D Projection     | `projection_means2d_pinhole`    | Backward | `EWA_fully_fused_proj_packed.projection_means2d_pinhole`               | (autograd)   | - | - | - | - |
