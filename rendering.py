@@ -1,6 +1,6 @@
-from torch_splat.rasterization_utils import torch_isect_tiles, torch_isect_offset_encode, torch_rasterize_to_pixels_per_tile_per_pixel_per_gauss, torch_rasterize_to_pixels_gaussian_merge, torch_rasterize_to_pixels_pixels_vectorized
-from torch_splat.EWA_fully_fused_proj_packed import *
-from torch_splat.sh_utils import build_color
+from rasterization_utils import torch_isect_tiles, torch_isect_offset_encode, torch_rasterize_to_pixels_per_tile_per_pixel_per_gauss, torch_rasterize_to_pixels_gaussian_merge, torch_rasterize_to_pixels_pixels_vectorized
+from EWA_fully_fused_proj_packed import *
+from sh_utils import build_color
 
 import torch
 import torch.distributed
