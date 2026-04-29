@@ -45,9 +45,9 @@ def build_rotation(r):
 
 
 # Build the scaling and rotation matrix L, which is used to compute the covariance.
-def build_scaling_rotation(s, r):
+def build_scaling_rotation(s, r, dependency_config):
     L = torch.zeros((s.shape[0], 3, 3), dtype=s.dtype, device=s.device)
-    R = build_rotation(r)
+    R = dependency_config.build_rotation(r)
 
     L[:,0,0] = s[:,0]
     L[:,1,1] = s[:,1]
@@ -73,8 +73,8 @@ def strip_symmetric(sym):
 
 
 # Build Covariance matrix 3D with shape (N,3,3)
-def build_covariance_3d(s, r):
-    L = build_scaling_rotation(s, r)
+def build_covariance_3d(s, r, dependency_config):
+    L = dependency_config.build_scaling_rotation(s, r, dependency_config)
     actual_covariance = L @ L.transpose(1, 2)
     return actual_covariance
     # symm = strip_symmetric(actual_covariance)
@@ -285,7 +285,8 @@ def torch_splat_fully_fused_projection_batch(
     eps2d=0.3,
     near_plane=0.01,
     far_plane=1e10,
-    radius_clip=0.0
+    radius_clip=0.0,
+    dependency_config=None,
 ):
     """
     Flexible batched projection: works for B>1 or B=1.
@@ -343,7 +344,7 @@ def torch_splat_fully_fused_projection_batch(
 
             # Using camera.world_view_transform instead of viewmatbc, beecause world_view_transform here is the transpose of viewmatbc
 
-            means2D, means_c, depths, in_mask = projection_means2d_pinhole(mean_b,viewmat_bc, K_bc, near_plane, far_plane) # change from viewmat_bc to camera world view
+            means2D, means_c, depths, in_mask = dependency_config.projection_means2d_pinhole(mean_b, viewmat_bc, K_bc, near_plane, far_plane) # change from viewmat_bc to camera world view
             if not in_mask.any():
                 continue
 
@@ -362,19 +363,19 @@ def torch_splat_fully_fused_projection_batch(
             idxs = torch.arange(N, device=means.device)[in_mask]
 
             # Build Cov3D
-            cov3d = build_covariance_3d(scale_b, quat_b)
+            cov3d = dependency_config.build_covariance_3d(scale_b, quat_b, dependency_config)
 
             # Build Cov2D
             # FoVx, FoVy = compute_fov(K_bc, width, height)
             # focal_x, focal_y = K_bc[0,0], K_bc[1,1]
 
 
-            cov2d, det_blur, compensation = build_covariance_2d(
+            cov2d, det_blur, compensation = dependency_config.build_covariance_2d(
                 mean3d=mean_b[in_mask],
                 cov3d=cov3d,
-                mean_c = means_c,
+                mean_c=means_c,
                 viewmatrix=viewmat_bc,
-                K = K_bc,
+                K=K_bc,
                 width=width,
                 height=height,
                 eps2d=eps2d
@@ -445,7 +446,7 @@ def torch_splat_fully_fused_projection_batch(
             print("Total number of masked value is", valid_mask.sum().item())
 
             # Find conics
-            inv_00, inv_01, inv_11 = inverse_cov2d_v2(cov2d[:, 0, 0], cov2d[:, 0, 1], cov2d[:, 1, 1], scale=1.0)
+            inv_00, inv_01, inv_11 = dependency_config.inverse_cov2d(cov2d[:, 0, 0], cov2d[:, 0, 1], cov2d[:, 1, 1], scale=1.0)
             conics = torch.stack([inv_00, inv_01, inv_11], dim=-1)
 
 
